@@ -1,7 +1,7 @@
 
-import React from 'react';
-import { Wifi, Zap, LogOut, User, Crown, Database } from 'lucide-react';
-import { auth, signOut } from '../services/firebase';
+import React, { useEffect, useState } from 'react';
+import { Wifi, Zap, LogOut, User, Crown, Database, Server, RefreshCw } from 'lucide-react';
+import { auth, signOut, checkBackendHealth } from '../services/firebase';
 
 interface HeaderProps {
   userEmail?: string | null;
@@ -12,6 +12,21 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ userEmail, subscriptionPlan = 'FREE', onUpgrade, onProfileClick, onDatabaseClick }) => {
+  const [serverStatus, setServerStatus] = useState<'ONLINE' | 'OFFLINE' | 'CHECKING'>('CHECKING');
+
+  const checkStatus = async () => {
+    setServerStatus('CHECKING');
+    const isOnline = await checkBackendHealth();
+    setServerStatus(isOnline ? 'ONLINE' : 'OFFLINE');
+  };
+
+  useEffect(() => {
+    checkStatus();
+    // Poll every 10 seconds
+    const interval = setInterval(checkStatus, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -35,11 +50,20 @@ export const Header: React.FC<HeaderProps> = ({ userEmail, subscriptionPlan = 'F
       </div>
       
       <div className="flex items-center gap-6">
+        
+        {/* Server Status Indicator */}
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 cursor-pointer hover:bg-slate-800 transition-colors" onClick={checkStatus} title="Click to refresh connection">
+           {serverStatus === 'CHECKING' ? (
+             <RefreshCw className="w-3 h-3 text-slate-500 animate-spin" />
+           ) : (
+             <div className={`w-2 h-2 rounded-full ${serverStatus === 'ONLINE' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 animate-pulse'}`} />
+           )}
+           <span className={`text-xs font-bold font-mono ${serverStatus === 'ONLINE' ? 'text-emerald-400' : 'text-rose-400'}`}>
+             {serverStatus === 'ONLINE' ? 'SYSTEM ONLINE' : 'SERVER OFFLINE'}
+           </span>
+        </div>
+
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-xs text-emerald-400 font-medium">Data Stream Active</span>
-          </div>
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
             <Wifi className="w-3 h-3" />
             <span>Ultra-Low Latency</span>
