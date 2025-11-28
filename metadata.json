@@ -1,0 +1,7 @@
+{
+  "name": "AI Screen Analyzer",
+  "description": "An intelligent desktop co-pilot that analyzes your screen in real-time using Google Gemini 2.5 Flash. It provides summaries, extracts code, and answers questions about your visual context.",
+  "requestFramePermissions": [
+    "display-capture"
+  ]
+}
